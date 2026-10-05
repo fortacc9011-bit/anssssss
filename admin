@@ -1,0 +1,2854 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELmaystro Modz — Admin Panel</title>
+  <link rel="icon" type="image/png" href="/logo-square.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #ffffff;
+      /* أبيض نيون زي اللوجو */
+      --bg: #0a0a0a;
+      /* أسود عميق */
+      --card: #161616;
+      /* رمادي غامق جداً */
+      --accent: #222222;
+
+      /* Map existing variables to new palette */
+      --surface: var(--card);
+      --surface2: var(--accent);
+      --border: rgba(255, 255, 255, 0.08);
+      --primary-dark: #cccccc;
+      --text: #f1f5f9;
+      --muted: #888888;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ===== AURORA TOP BAR ===== */
+    .aurora {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ffffff, #555555, #aaaaaa, #333333, #ffffff);
+      background-size: 300% 100%;
+      animation: auroraSlide 4s linear infinite;
+      z-index: 10000;
+      pointer-events: none;
+    }
+    @keyframes auroraSlide {
+      0%   { background-position: 0% 0%; }
+      100% { background-position: 300% 0%; }
+    }
+
+    /* ===== ANIMATED GRID BACKGROUND ===== */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+    @keyframes gridMove {
+      0%   { background-position: 0 0; }
+      100% { background-position: 50px 50px; }
+    }
+
+    /* ===== GLOWING ORBS ===== */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.07;
+      animation: orbFloat linear infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .orb-1 { width: 450px; height: 450px; background: #ffffff; top: -120px; left: -100px; animation-duration: 18s; }
+    .orb-2 { width: 350px; height: 350px; background: #555555; bottom: -80px; right: -80px; animation-duration: 22s; animation-delay: -8s; }
+    .orb-3 { width: 260px; height: 260px; background: #333333; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-duration: 15s; animation-delay: -4s; }
+
+    @keyframes orbFloat {
+      0%   { transform: translateY(0px) scale(1); }
+      33%  { transform: translateY(-30px) scale(1.05); }
+      66%  { transform: translateY(20px) scale(0.97); }
+      100% { transform: translateY(0px) scale(1); }
+    }
+
+    /* ── Login Screen ── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.08), transparent 60%);
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.03), 0 25px 50px rgba(0, 0, 0, 0.7);
+    }
+
+    .login-card h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .login-card p {
+      color: var(--muted);
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    /* ── App Layout ── */
+    #app {
+      display: none;
+      flex-direction: row;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    #sidebar {
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sidebar-logo {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-logo h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .sidebar-logo span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      margin: 4px 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      color: #000000;
+      background: #ffffff;
+      font-weight: 600;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.25);
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      opacity: 0.8;
+    }
+
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #topbar h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+    }
+
+    /* ── Forms & Inputs ── */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    select option {
+      background: var(--surface2);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0a0a0a;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+
+    .btn-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* ── Cards & Tables ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .card-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 4px;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      border-top: 1px solid transparent;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.06) !important;
+    }
+
+    tr:hover td:first-child {
+      border-top-left-radius: 12px !important;
+      border-bottom-left-radius: 12px !important;
+    }
+
+    tr:hover td:last-child {
+      border-top-right-radius: 12px !important;
+      border-bottom-right-radius: 12px !important;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+
+    .badge-yellow {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .badge-blue {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--primary);
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 32px;
+    }
+
+    .modal h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    /* ── Variants ── */
+    .variant-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr auto;
+      gap: 8px;
+      align-items: end;
+      margin-bottom: 8px;
+      padding: 12px;
+      background: var(--surface2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .variant-row input {
+      margin: 0;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 9999;
+      transform: translateY(100px);
+      transition: transform 0.3s ease;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+    }
+
+    #toast.success {
+      background: rgba(16, 185, 129, 0.9);
+      color: white;
+    }
+
+    #toast.error {
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+    }
+
+    .text-muted {
+      color: var(--muted);
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .gap-2 {
+      gap: 8px;
+    }
+
+    .mt-2 {
+      margin-top: 8px;
+    }
+
+    .mt-4 {
+      margin-top: 16px;
+    }
+
+    .img-preview {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+
+    .product-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      gap: 12px;
+    }
+
+    .image-preview-wrapper {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    .image-preview-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .image-preview-wrapper .image-delete-btn {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.2s, transform 0.1s;
+      z-index: 10;
+    }
+
+    .image-preview-wrapper .image-delete-btn:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Aurora Top Glow Line -->
+  <div class="aurora"></div>
+
+  <!-- Ambient Glowing Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h1>🎮 ELmaystro Modz</h1>
+      <p>Admin Panel — Sign in to continue</p>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" placeholder="admin" autocomplete="username"
+          onkeydown="if(event.key==='Enter') document.getElementById('login-password').focus()">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button id="login-btn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-weight:700" onclick="doLogin()">
+        Sign In
+      </button>
+      <div id="login-error" style="color:#ef4444;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);padding:10px;border-radius:8px;font-size:13px;margin-top:12px;text-align:center;display:none">
+      </div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="app">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div class="sidebar-logo">
+        <h2>ELmaystro Modz</h2>
+        <span>Admin Panel</span>
+      </div>
+      <a class="nav-item active" onclick="showSection('dashboard')" data-section="dashboard">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 7h4v4H3zm0 6h4v4H3zm6-6h4v4H9zm0 6h4v4H9zm6-6h4v4h-4zm0 6h4v4h-4z" />
+        </svg>
+        Dashboard
+      </a>
+      <a class="nav-item" onclick="showSection('products')" data-section="products">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+        Products
+      </a>
+      <a class="nav-item" onclick="showSection('categories')" data-section="categories">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+        Categories
+      </a>
+      <a class="nav-item" onclick="showSection('orders')" data-section="orders">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        Orders
+      </a>
+      <a class="nav-item" onclick="showSection('reviews')" data-section="reviews">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+        Reviews
+      </a>
+      <a class="nav-item" onclick="showSection('settings')" data-section="settings">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Settings
+      </a>
+      <div style="margin-top:auto;padding:16px 24px;border-top:1px solid var(--border)">
+        <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center" onclick="logout()">Sign
+          Out</button>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div id="main">
+      <div id="topbar">
+        <h2 id="page-title">Dashboard</h2>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div id="topbar-currency-container"></div>
+          <div id="topbar-actions"></div>
+        </div>
+      </div>
+      <div id="content">
+        <!-- Sections rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal">
+      <h3 id="product-modal-title">Add Product</h3>
+      <div id="product-form-content"></div>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-secondary" onclick="closeModal('product-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="category-modal">
+    <div class="modal">
+      <h3 id="cat-modal-title">Add Category</h3>
+      <div id="cat-form-content"></div>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-secondary" onclick="closeModal('category-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Modal -->
+  <div class="modal-overlay" id="review-modal">
+    <div class="modal">
+      <h3>Add Review</h3>
+      <div id="review-form-content"></div>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-secondary" onclick="closeModal('review-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveReview()">Save Review</button>
+      </div>
+    </div>
+  </div>
+  <!-- Variant Stock Modal -->
+  <div class="modal-overlay" id="variant-stock-modal">
+    <div class="modal" style="max-w-xl">
+      <h3 id="stock-modal-title">Manage Stock Keys</h3>
+
+      <!-- Bulk Add Section -->
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div class="card-header" style="margin-bottom:12px">
+          <h4>Bulk Add Keys / Accounts</h4>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Enter one key, account or code per line:</p>
+        <textarea id="bulk-stock-input" rows="5" placeholder="key_1&#10;key_2&#10;username:password"
+          style="font-family:monospace;font-size:13px"></textarea>
+        <button class="btn btn-primary btn-sm mt-2" onclick="saveVariantStock()">Add Stock Keys</button>
+      </div>
+
+      <!-- Existing Stock List -->
+      <div class="card" style="padding:16px;margin-bottom:0">
+        <div class="card-header" style="margin-bottom:12px">
+          <h4>Current Stock Items</h4>
+        </div>
+        <div
+          style="max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface2)">
+          <table style="font-size:13px">
+            <thead>
+              <tr>
+                <th style="padding:8px">Key / Content</th>
+                <th style="padding:8px">Status</th>
+                <th style="padding:8px">Action</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table-body">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-4" style="justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeModal('variant-stock-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deliver Manually Modal -->
+  <div class="modal-overlay" id="deliver-manually-modal">
+    <div class="modal" style="max-width:550px">
+      <h3>Deliver Keys Manually</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Fulfill the order using keys from the current
+        variant stock, or type in custom keys with instructions.</p>
+
+      <div class="form-group">
+        <label>Delivery Type</label>
+        <select id="manual-delivery-type" onchange="toggleDeliveryType(this.value)">
+          <option value="stock">Use Current Stock Keys (Recommended)</option>
+          <option value="custom">Paste Custom Keys</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="manual-delivery-keys-container" style="display:none">
+        <label>Paste Custom Keys (one key per line)</label>
+        <textarea id="manual-delivery-keys" rows="4" placeholder="key_1&#10;key_2"
+          style="font-family:monospace"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Load Instructions Template</label>
+        <select id="instructions-template-select" onchange="loadInstructionsTemplate(this.value)">
+          <option value="">-- No template (Custom) --</option>
+          <option value="rockstar">Rockstar Activation Code ⚡</option>
+          <option value="modmenu">Mod Menu Activation Guide 🔑</option>
+          <option value="account">Account Login Info 🎮</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Delivery Instructions (HTML supported - optional)</label>
+        <textarea id="manual-delivery-instructions" rows="6"
+          placeholder="Provide redemption instructions for the customer..."
+          style="font-family:monospace;font-size:12px"></textarea>
+      </div>
+
+      <div class="flex gap-2 mt-4" style="justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeModal('deliver-manually-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitManualDelivery()">Deliver Now</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="bulk-update-modal">
+    <div class="modal" style="max-width: 400px;">
+      <h3>Bulk Update Visibility</h3>
+      <div class="form-group">
+        <label>Select new visibility for <span id="bulk-update-count" style="font-weight:bold;">0</span>
+          products:</label>
+        <select id="bulk-visibility">
+          <option value="">-- Choose Status --</option>
+          <option value="0">Visible</option>
+          <option value="1">Hidden</option>
+          <option value="2">Link Only (مخفي من المتجر)</option>
+        </select>
+      </div>
+      <div class="flex gap-2 mt-4" style="justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="closeBulkUpdateModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitBulkUpdate()">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const API = window.location.origin + '/api';
+    let token = (() => { try { return localStorage.getItem('admin_token'); } catch (e) { return null; } })();
+    let currentProducts = [];
+    let currentCategories = [];
+    let editingProductId = null;
+    let selectedProducts = new Set();
+    let editingCategoryId = null;
+    let variantCount = 0;
+    let productExistingImages = [];
+    let productNewFiles = [];
+
+    // ── Security Helpers ─────────────────────────────────────────────────────────
+
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Keep escapeHtml as alias to avoid breaking existing usages
+    const escapeHtml = escapeHTML;
+
+    function renderProductImagesPreview() {
+      const preview = document.getElementById('p-images-preview');
+      if (!preview) return;
+      preview.innerHTML = '';
+
+      // Render existing images
+      productExistingImages.forEach((imgName, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-preview-wrapper';
+
+        const img = document.createElement('img');
+        img.src = `${window.location.origin}/uploads/${escapeHTML(imgName)}`;
+        img.onerror = () => { wrapper.style.display = 'none'; };
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.innerHTML = '✕';
+        delBtn.className = 'image-delete-btn';
+        delBtn.onclick = () => {
+          productExistingImages.splice(index, 1);
+          renderProductImagesPreview();
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(delBtn);
+        preview.appendChild(wrapper);
+      });
+
+      // Render new images
+      productNewFiles.forEach((file, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-preview-wrapper';
+
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.style.border = '2px dashed var(--primary)';
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.innerHTML = '✕';
+        delBtn.className = 'image-delete-btn';
+        delBtn.onclick = () => {
+          productNewFiles.splice(index, 1);
+          renderProductImagesPreview();
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(delBtn);
+        preview.appendChild(wrapper);
+      });
+    }
+
+    function sanitizeHTML(html) {
+      if (!html) return '';
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Remove scripts and elements that could load external payloads
+        doc.querySelectorAll('script, iframe, embed, object, link, style').forEach(el => el.remove());
+
+        // Clean attributes
+        doc.querySelectorAll('*').forEach(el => {
+          const attrs = el.attributes;
+          for (let i = attrs.length - 1; i >= 0; i--) {
+            const name = attrs[i].name.toLowerCase();
+            const value = attrs[i].value.toLowerCase().trim();
+            if (name.startsWith('on') || value.startsWith('javascript:') || value.startsWith('data:') || value.startsWith('vbscript:')) {
+              el.removeAttribute(attrs[i].name);
+            }
+          }
+        });
+        return doc.body.innerHTML;
+      } catch (e) {
+        return html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/on\w+\s*=\s*(['"].*?['"]|[^ >\s]+)/gi, '')
+          .replace(/(href|src)\s*=\s*(['"]\s*(javascript|data|vbscript):.*?['"]|[^ >\s]+)/gi, '');
+      }
+    }
+
+    // ── Auth ─────────────────────────────────────────────────────────────────────
+
+    async function doLogin() {
+      const username = (document.getElementById('login-username').value || '').trim();
+      const password = (document.getElementById('login-password').value || '').trim();
+      const err = document.getElementById('login-error');
+      const btn = document.getElementById('login-btn');
+      
+      err.style.display = 'none';
+
+      if (!username || !password) {
+        err.textContent = 'Please enter both username and password.';
+        err.style.display = 'block';
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = 'Signing In...';
+      }
+
+      try {
+        const res = await fetch(`${API}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success && data.token) {
+          token = data.token;
+          try { localStorage.setItem('admin_token', token); } catch(e) {}
+          showApp();
+        } else {
+          err.textContent = data.message || 'Invalid username or password';
+          err.style.display = 'block';
+        }
+      } catch (e) {
+        console.error('Login error:', e);
+        err.textContent = 'Cannot connect to server. Check your connection or backend status.';
+        err.style.display = 'block';
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'Sign In';
+        }
+      }
+    }
+
+    function logout() {
+      token = null;
+      try { localStorage.removeItem('admin_token'); } catch(e) {}
+      location.reload();
+    }
+
+    async function api(method, path, body) {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API}${path}`, {
+          method,
+          headers,
+          credentials: 'include',
+          body: body ? JSON.stringify(body) : undefined
+        });
+        if (res.status === 401) { logout(); return { success: false, message: 'Unauthorized' }; }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          return { success: false, message: errData.message || `Server error: ${res.status}` };
+        }
+        return await res.json();
+      } catch (e) {
+        console.error('API Error:', e);
+        return { success: false, message: 'Network error: cannot connect to backend server' };
+      }
+    }
+
+    async function uploadFile(file) {
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API}/upload`, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: form
+        });
+        if (res.status === 401) { logout(); return { success: false, message: 'Unauthorized' }; }
+        if (!res.ok) {
+          return { success: false, message: `Upload failed: ${res.status}` };
+        }
+        return await res.json();
+      } catch (e) {
+        console.error('Upload Error:', e);
+        return { success: false, message: 'Network error during upload' };
+      }
+    }
+
+    // ── Currency Switcher & Formatter ───────────────────────────────────────────
+    let currentCurrency = localStorage.getItem('selectedCurrency') || '';
+    let defaultDisplayCurrency = 'USD';
+    let usdToEgpRate = 50.00;
+    let usdToEurRate = 0.92;
+
+    function loadCurrencySettingsFromStore(settings) {
+      if (settings) {
+        if (settings.currency) {
+          defaultDisplayCurrency = settings.currency;
+          if (!localStorage.getItem('selectedCurrency')) {
+            currentCurrency = settings.currency;
+          }
+        }
+        if (settings.usd_to_egp_rate) usdToEgpRate = parseFloat(settings.usd_to_egp_rate) || 50.00;
+        if (settings.usd_to_eur_rate) usdToEurRate = parseFloat(settings.usd_to_eur_rate) || 0.92;
+      }
+    }
+
+    function formatPrice(amount, sourceCurrency = null) {
+      const src = sourceCurrency || 'USD';
+      // 1. Convert from src to USD (Hub)
+      let amountInUsd = amount;
+      if (src === 'EGP') {
+        amountInUsd = amount / usdToEgpRate;
+      } else if (src === 'EUR') {
+        amountInUsd = amount / usdToEurRate;
+      }
+
+      // 2. Convert from USD to target
+      const targetCurrency = currentCurrency || defaultDisplayCurrency || 'USD';
+      let converted = amountInUsd;
+      if (targetCurrency === 'EGP') converted = amountInUsd * usdToEgpRate;
+      else if (targetCurrency === 'EUR') converted = amountInUsd * usdToEurRate;
+
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: targetCurrency
+      }).format(converted);
+    }
+
+    function renderTopbarCurrencySelector() {
+      const container = document.getElementById('topbar-currency-container');
+      if (!container) return;
+
+      const activeCurrency = currentCurrency || defaultDisplayCurrency;
+      container.innerHTML = `
+        <select id="currency-selector" onchange="changeAdminCurrency(this.value)" style="padding: 6px 12px; font-size: 13px; font-weight: 600; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: auto; cursor: pointer; outline: none;">
+          <option value="USD" ${activeCurrency === 'USD' ? 'selected' : ''}>USD ($)</option>
+          <option value="EUR" ${activeCurrency === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+          <option value="EGP" ${activeCurrency === 'EGP' ? 'selected' : ''}>EGP (ج.م)</option>
+        </select>
+      `;
+    }
+
+    function changeAdminCurrency(currency) {
+      currentCurrency = currency;
+      localStorage.setItem('selectedCurrency', currency);
+      const activeNavItem = document.querySelector('.nav-item.active');
+      if (activeNavItem) {
+        const section = activeNavItem.dataset.section;
+        showSection(section);
+      }
+    }
+
+    function showSpinner() {
+      document.getElementById('content').innerHTML = `
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p style="color: var(--muted); font-size: 14px; font-weight: 500;">Loading data, please wait...</p>
+    </div>`;
+    }
+
+    // ── App Init ─────────────────────────────────────────────────────────────────
+
+    async function showApp() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+
+      // Load settings to fetch currency rates
+      const res = await api('GET', '/admin/settings');
+      if (res && res.success) {
+        loadCurrencySettingsFromStore(res.data);
+      }
+      renderTopbarCurrencySelector();
+
+      await loadCategories();
+      showSection('dashboard');
+    }
+
+    function showSection(name) {
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.section === name);
+      });
+      document.getElementById('page-title').textContent = {
+        dashboard: 'Dashboard', products: 'Products', categories: 'Categories',
+        orders: 'Orders', reviews: 'Reviews', settings: 'Settings'
+      }[name] || name;
+
+      const actions = document.getElementById('topbar-actions');
+      actions.innerHTML = '';
+
+      if (name === 'products') {
+        actions.innerHTML = `<button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>`;
+        loadProducts();
+      } else if (name === 'categories') {
+        actions.innerHTML = `<button class="btn btn-primary" onclick="openCategoryModal()">+ Add Category</button>`;
+        renderCategories();
+      } else if (name === 'orders') {
+        loadOrders();
+      } else if (name === 'reviews') {
+        actions.innerHTML = `<button class="btn btn-primary" onclick="openReviewModal()">+ Add Review</button>`;
+        loadReviews();
+      } else if (name === 'settings') {
+        loadSettings();
+      } else {
+        loadDashboard();
+      }
+    }
+
+    // ── Dashboard ─────────────────────────────────────────────────────────────────
+
+    async function loadDashboard() {
+      showSpinner();
+      const [productsData, ordersData, reviewsData] = await Promise.all([
+        api('GET', '/admin/products'),
+        api('GET', '/admin/orders'),
+        api('GET', '/admin/reviews')
+      ]);
+
+      if (!productsData?.success || !ordersData?.success || !reviewsData?.success) {
+        document.getElementById('content').innerHTML = `
+      <div class="card" style="text-align:center;padding:48px">
+        <div style="color:var(--danger);font-size:48px;margin-bottom:16px">⚠️</div>
+        <h3>Failed to load dashboard data</h3>
+        <p style="color:var(--muted);margin:8px 0 24px">${productsData?.message || ordersData?.message || reviewsData?.message || 'Check database connection.'}</p>
+        <button class="btn btn-primary" onclick="loadDashboard()">Retry</button>
+      </div>`;
+        return;
+      }
+
+      const products = productsData?.data || [];
+      const orders = ordersData?.data || [];
+      const reviews = reviewsData?.data || [];
+      const revenue = orders.filter(o => o.status === 'completed').reduce((s, o) => s + o.total, 0);
+
+      document.getElementById('content').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Total Products</div><div class="stat-value">${products.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value">${orders.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Orders</div><div class="stat-value" style="color:var(--warning)">${orders.filter(o => o.status === 'pending').length}</div></div>
+      <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value" style="color:var(--success)">${formatPrice(revenue)}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <h3>Recent Orders</h3>
+        <button class="btn btn-secondary btn-sm" onclick="showSection('orders')" style="display:flex;align-items:center;gap:6px;">
+          View All Orders &rarr;
+        </button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Email</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th style="text-align:right">Action</th>
+          </tr>
+        </thead>
+        <tbody>${orders.slice(0, 8).map(o => `
+          <tr style="cursor:pointer" onclick="showOrderDetails('${escapeHTML(o.id)}')">
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-family:monospace;font-size:12px;font-weight:600;color:var(--primary)">#${escapeHTML(o.id.slice(0, 8))}</span>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 6px;font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText('${escapeHTML(o.id)}');toast('Order ID copied!', 'success');" title="Copy full ID">📋</button>
+              </div>
+            </td>
+            <td>${escapeHTML(o.email)}</td>
+            <td><strong>${formatPrice(o.total)}</strong></td>
+            <td>${statusBadge(o.status)}</td>
+            <td style="color:var(--muted)">${escapeHTML(new Date(o.created_at).toLocaleDateString())}</td>
+            <td style="text-align:right">
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();showOrderDetails('${escapeHTML(o.id)}')">
+                View &rarr;
+              </button>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No orders yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+    }
+
+    // ── Products ──────────────────────────────────────────────────────────────────
+
+    async function loadCategories() {
+      const res = await api('GET', '/admin/categories');
+      if (res && res.success) {
+        currentCategories = res.data || [];
+      } else {
+        currentCategories = [];
+        toast(res?.message || 'Failed to load categories', 'error');
+      }
+    }
+
+    async function loadProducts() {
+      showSpinner();
+      const res = await api('GET', '/admin/products');
+      if (!res || !res.success) {
+        document.getElementById('content').innerHTML = `
+      <div class="card" style="text-align:center;padding:48px">
+        <div style="color:var(--danger);font-size:48px;margin-bottom:16px">⚠️</div>
+        <h3>Failed to load products</h3>
+        <p style="color:var(--muted);margin:8px 0 24px">${res?.message || 'Check connection to backend server.'}</p>
+        <button class="btn btn-primary" onclick="loadProducts()">Retry</button>
+      </div>`;
+        return;
+      }
+      currentProducts = res.data || [];
+      const baseUrl = window.location.origin;
+
+      document.getElementById('content').innerHTML = `
+    <div class="card">
+      <table>
+        <thead><tr>
+          <th style="width: 40px; padding-left: 16px;"><input type="checkbox" id="selectAllProducts" onchange="toggleSelectAllProducts(this.checked)"></th>
+          <th>Image</th><th>Name</th><th>Category</th><th>Variants</th><th>Price</th><th>Visibility</th><th>Actions</th>
+        </tr></thead>
+        <tbody>${currentProducts.map(p => {
+        const img = p.imageNames?.[0] ? `<img src="${baseUrl}/uploads/${escapeHTML(p.imageNames[0])}" class="product-img" onerror="this.style.display='none'">` : '<div class="product-img" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--muted)">?</div>';
+        const cat = currentCategories.find(c => c.id === p.category_id);
+        let bColor = p.discount_badge_color || '#ef4444';
+        let tPos = p.trending_position || '';
+        try {
+          if (p.metadata) {
+            const m = typeof p.metadata === 'string' ? JSON.parse(p.metadata) : p.metadata;
+            if (m.discountBadgeColor) bColor = m.discountBadgeColor;
+            if (m.trendingPosition) tPos = m.trendingPosition;
+          }
+        } catch(e) {}
+        const discBadge = (p.discount_percent && p.discount_percent > 0)
+          ? `<span class="badge" style="background:${bColor}22; color:${bColor}; border:1px solid ${bColor}60; font-size:11px; padding:2px 7px; margin-left:6px; border-radius:6px; font-weight:bold">-${p.discount_percent}%</span>`
+          : '';
+        let trendingBadge = '';
+        if (tPos === 'center') {
+          trendingBadge = `<span class="badge" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.4); font-size:10px; padding:2px 6px; border-radius:6px; font-weight:bold; margin-left:4px" title="Trending: Center">⭐ منتصف</span>`;
+        } else if (tPos === 'left') {
+          trendingBadge = `<span class="badge" style="background:rgba(139,92,246,0.15); color:#a78bfa; border:1px solid rgba(139,92,246,0.4); font-size:10px; padding:2px 6px; border-radius:6px; font-weight:bold; margin-left:4px" title="Trending: Left">⬅️ يسار</span>`;
+        } else if (tPos === 'right') {
+          trendingBadge = `<span class="badge" style="background:rgba(236,72,153,0.15); color:#f472b6; border:1px solid rgba(236,72,153,0.4); font-size:10px; padding:2px 6px; border-radius:6px; font-weight:bold; margin-left:4px" title="Trending: Right">➡️ يمين</span>`;
+        }
+        const costs = (p.variants || []).map(v => Number(v.cost)).filter(c => !isNaN(c) && c > 0);
+        const minCost = costs.length ? Math.min(...costs) : (p.variants?.[0]?.cost ? Number(p.variants[0].cost) : null);
+        let priceHtml = '<span class="text-muted">—</span>';
+        if (minCost !== null) {
+          const currSymbol = p.currency === 'EUR' ? '€' : p.currency === 'EGP' ? 'EGP ' : '$';
+          if (p.discount_percent && p.discount_percent > 0) {
+            const discPrice = (minCost * (1 - p.discount_percent / 100)).toFixed(2);
+            priceHtml = `<div>
+              <span style="text-decoration:line-through;color:var(--muted);font-size:11px;margin-right:4px">${currSymbol}${minCost.toFixed(2)}</span>
+              <span style="color:#10b981;font-weight:700;font-size:13px">${currSymbol}${discPrice}</span>
+            </div>`;
+          } else {
+            priceHtml = `<span style="font-weight:600;font-size:13px">${currSymbol}${minCost.toFixed(2)}</span>`;
+          }
+        }
+
+        return `<tr>
+            <td style="padding-left: 16px;"><input type="checkbox" class="product-select-cb" value="${p.id}" onchange="toggleProductSelection('${p.id}', this.checked)" ${selectedProducts.has(p.id) ? 'checked' : ''}></td>
+            <td>${img}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span style="font-weight:600">${escapeHTML(p.name)}</span>
+                ${discBadge}
+                ${trendingBadge}
+              </div>
+              <div style="font-size:12px;color:var(--muted)">${escapeHTML(p.slug)}</div>
+            </td>
+            <td>${cat ? `<span class="badge badge-blue">${escapeHTML(cat.name)}</span>` : '<span class="text-muted">—</span>'}</td>
+            <td>${p.variants?.length || 0} variants</td>
+            <td>${priceHtml}</td>
+            <td>${p.visibility === 0 ? '<span class="badge badge-green">Visible</span>' : p.visibility === 2 ? '<span class="badge badge-warning" style="background:#f59e0b;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;">Link Only</span>' : '<span class="badge badge-red">Hidden</span>'}</td>
+            <td class="flex gap-2">
+              <button class="btn btn-secondary btn-sm" onclick="openProductModal('${escapeHTML(p.id)}')">Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteProduct('${escapeHTML(p.id)}')">Delete</button>
+            </td>
+          </tr>`;
+      }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">No products yet. Click "+ Add Product" to start.</td></tr>'}
+        </tbody>
+      </table>
+      
+      <!-- Sticky Action Bar -->
+      <div id="bulk-action-bar" style="display: ${selectedProducts.size > 0 ? 'flex' : 'none'}; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px 24px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.8); align-items: center; gap: 16px; z-index: 9999; border: 1px solid var(--border);">
+        <span style="font-weight: 600;"><span id="bulk-selected-count">${selectedProducts.size}</span> products selected</span>
+        <button class="btn btn-secondary btn-sm" onclick="deselectAllProducts()">Deselect</button>
+        <button class="btn btn-secondary btn-sm" onclick="openBulkUpdateModal()">Update</button>
+        <button class="btn btn-danger btn-sm" onclick="bulkDeleteProducts()">Delete</button>
+      </div>
+    </div>`;
+
+      setTimeout(() => {
+        const selectAll = document.getElementById('selectAllProducts');
+        if (selectAll) {
+          selectAll.checked = currentProducts.length > 0 && selectedProducts.size === currentProducts.length;
+        }
+      }, 0);
+    }
+
+    function openProductModal(id = null) {
+      editingProductId = id;
+      variantCount = 0;
+      const product = id ? currentProducts.find(p => p.id === id) : null;
+      document.getElementById('product-modal-title').textContent = id ? 'Edit Product' : 'Add Product';
+
+      const catOptions = currentCategories.map(c => `<option value="${escapeHTML(c.id)}" ${product?.category_id === c.id ? 'selected' : ''}>${escapeHTML(c.name)}</option>`).join('');
+
+      let variantsHtml = '';
+      if (product?.variants?.length) {
+        product.variants.forEach((v, i) => {
+          variantsHtml += variantRow(i, v);
+          variantCount = i + 1;
+        });
+      } else {
+        variantsHtml = variantRow(0);
+        variantCount = 1;
+      }
+
+      let metadata = {};
+      try { metadata = JSON.parse(product?.metadata || '{}'); } catch { }
+      let trendingPos = product?.trending_position || metadata?.trendingPosition || '';
+
+      document.getElementById('product-form-content').innerHTML = `
+    <div class="form-group"><label>Product Name *</label><input id="p-name" value="${escapeHTML(product?.name || '')}" placeholder="e.g. Warzone Aimbot Pro" oninput="autoGenSlug()"></div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;justify-content:space-between">
+        <span>URL Handle (Slug)</span>
+        <button type="button" onclick="autoGenSlug(true)" style="font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--text);cursor:pointer">Auto-generate</button>
+      </label>
+      <input id="p-slug" value="${escapeHTML(product?.slug || '')}" placeholder="e.g. warzone-aimbot-pro" oninput="updateSlugPreview()">
+      <p style="font-size:11px;color:#64748b;margin-top:4px">Product URL: <span id="slug-preview" style="color:var(--primary)">${product?.slug ? escapeHTML(window.location.origin.replace('3001', '5173').replace('5000', '5173') + '/product/' + product.slug) : '—'}</span></p>
+    </div>
+    <div class="form-group"><label>Category</label><select id="p-cat"><option value="">— No Category —</option>${catOptions}</select></div>
+    <div class="form-group">
+      <label>Product Currency (Pricing currency of variants below)</label>
+      <select id="p-currency">
+        <option value="" ${!product?.currency ? 'selected' : ''}>Default (Store Currency)</option>
+        <option value="USD" ${product?.currency === 'USD' ? 'selected' : ''}>USD ($)</option>
+        <option value="EUR" ${product?.currency === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+        <option value="EGP" ${product?.currency === 'EGP' ? 'selected' : ''}>EGP (ج.م)</option>
+      </select>
+    </div>
+    <!-- Discount Badge Section with Color Customization -->
+    <div class="form-group" style="border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.02)">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+        <label style="color:var(--primary); font-weight:600; margin:0">🔥 Discount Badge (علامة الخصم - أعلى اليمين)</label>
+        <span id="discount-badge-preview" class="badge" style="background:${metadata.discountBadgeColor || product?.discount_badge_color || '#ef4444'}; color:#ffffff; font-weight:800; font-size:11px; padding:4px 10px; border-radius:8px; box-shadow: 0 4px 12px ${(metadata.discountBadgeColor || product?.discount_badge_color || '#ef4444')}60">-${product?.discount_percent || 20}%</span>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:flex-start">
+        <div>
+          <label style="font-size:12px; margin-bottom:6px">Discount Percentage (%)</label>
+          <input id="p-discount" type="number" min="0" max="99" step="1" value="${product?.discount_percent || 0}" placeholder="e.g. 20" oninput="updateDiscountBadgePreview()">
+          <span style="font-size:11px; color:var(--muted); margin-top:4px; display:block">اتركه 0 إذا لم يكن هناك خصم</span>
+        </div>
+        <div>
+          <label style="font-size:12px; margin-bottom:6px">Badge Color (لون العلامة)</label>
+          <div style="display:flex; align-items:center; gap:8px">
+            <input type="color" id="p-discount-color-picker" value="${metadata.discountBadgeColor || product?.discount_badge_color || '#ef4444'}" oninput="document.getElementById('p-discount-color').value = this.value; updateDiscountBadgePreview()" style="width:46px; height:38px; padding:0; border:1px solid var(--border); border-radius:8px; cursor:pointer; background:none">
+            <input id="p-discount-color" value="${escapeHTML(metadata.discountBadgeColor || product?.discount_badge_color || '#ef4444')}" placeholder="#ef4444" style="flex:1" oninput="document.getElementById('p-discount-color-picker').value = this.value; updateDiscountBadgePreview()">
+          </div>
+          <!-- Presets -->
+          <div style="display:flex; align-items:center; gap:6px; margin-top:8px">
+            <span style="font-size:11px; color:var(--muted)">Presets:</span>
+            <button type="button" onclick="setDiscountColorPreset('#ef4444')" style="width:20px;height:20px;border-radius:50%;background:#ef4444;border:1px solid rgba(255,255,255,0.3);cursor:pointer" title="Red"></button>
+            <button type="button" onclick="setDiscountColorPreset('#0066cc')" style="width:20px;height:20px;border-radius:50%;background:#0066cc;border:1px solid rgba(255,255,255,0.3);cursor:pointer" title="Blue"></button>
+            <button type="button" onclick="setDiscountColorPreset('#10b981')" style="width:20px;height:20px;border-radius:50%;background:#10b981;border:1px solid rgba(255,255,255,0.3);cursor:pointer" title="Emerald"></button>
+            <button type="button" onclick="setDiscountColorPreset('#f59e0b')" style="width:20px;height:20px;border-radius:50%;background:#f59e0b;border:1px solid rgba(255,255,255,0.3);cursor:pointer" title="Gold"></button>
+            <button type="button" onclick="setDiscountColorPreset('#8b5cf6')" style="width:20px;height:20px;border-radius:50%;background:#8b5cf6;border:1px solid rgba(255,255,255,0.3);cursor:pointer" title="Purple"></button>
+            <button type="button" onclick="setDiscountColorPreset('#06b6d4')" style="width:20px;height:20px;border-radius:50%;background:#06b6d4;border:1px solid rgba(255,255,255,0.3);cursor:pointer" title="Cyan"></button>
+            <button type="button" onclick="setDiscountColorPreset('#ec4899')" style="width:20px;height:20px;border-radius:50%;background:#ec4899;border:1px solid rgba(255,255,255,0.3);cursor:pointer" title="Pink"></button>
+          </div>
+        </div>
+      </div>
+      <!-- Real-time price impact preview -->
+      <div id="discount-calc-box" style="margin-top:12px; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px dashed var(--border); border-radius:8px; font-size:12px; display:flex; align-items:center; justify-content:space-between">
+        <span style="color:var(--muted)">تأثير الخصم على السعر (Live Impact):</span>
+        <span id="discount-calc-text" style="font-weight:600">—</span>
+      </div>
+    </div>
+    <div class="form-group"><label>Description (Markdown supported)</label><textarea id="p-desc" rows="4">${escapeHTML(product?.description || '')}</textarea></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="p-status">
+        <option value="Online" ${metadata.status === 'Online' || !metadata.status ? 'selected' : ''}>🟢 Online</option>
+        <option value="Offline" ${metadata.status === 'Offline' ? 'selected' : ''}>🔴 Offline</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>YouTube Video ID (optional)</label>
+      <input id="p-youtube" value="${escapeHTML(metadata.youtubeVideoId || '')}" placeholder="e.g. dQw4w9WgXcQ">
+    </div>
+    
+    <!-- Discord Embed Settings -->
+    <div style="border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 20px; background: rgba(255,255,255,0.02)">
+      <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--primary)">Custom Discord Embed (SEO)</h4>
+      <div class="form-group">
+        <label>Embed Title</label>
+        <input id="p-embed-title" value="${escapeHTML(metadata.embedTitle || '')}" placeholder="e.g. Tz & Tzx Menu - South #1">
+      </div>
+      <div class="form-group">
+        <label>Embed Description</label>
+        <textarea id="p-embed-desc" rows="3" placeholder="e.g. Tz Project & Tzx Project deliver premium FiveM power...">${escapeHTML(metadata.embedDescription || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Embed Image URL (defaults to first product image if empty)</label>
+        <input id="p-embed-image" value="${escapeHTML(metadata.embedImage || '')}" placeholder="e.g. https://domain.com/banner.png">
+      </div>
+      <div class="form-group">
+        <label>Embed Color (Hex Code)</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="color" id="p-embed-color-picker" value="${metadata.embedColor || '#ffffff'}" oninput="document.getElementById('p-embed-color').value = this.value" style="width:50px;height:38px;padding:0;border:none;border-radius:10px;cursor:pointer">
+          <input id="p-embed-color" value="${escapeHTML(metadata.embedColor || '#ffffff')}" placeholder="e.g. #ffffff" style="flex:1" oninput="document.getElementById('p-embed-color-picker').value = this.value">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Visibility</label>
+      <select id="p-visibility">
+        <option value="0" ${product?.visibility === 0 || !product ? 'selected' : ''}>Visible</option>
+        <option value="1" ${product?.visibility === 1 ? 'selected' : ''}>Hidden</option>
+        <option value="2" ${product?.visibility === 2 ? 'selected' : ''}>Link Only (مخفي من المتجر)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="p-bestseller" style="width:auto" ${product?.is_best_seller ? 'checked' : ''}> Mark as Best Seller
+      </label>
+    </div>
+    <div class="form-group" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+      <label style="font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--text);">
+        <span>🔥 موضع المنتج في قسم Trending Products (الصفحة الرئيسية)</span>
+      </label>
+      <select id="p-trending-pos" style="width: 100%; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px;">
+        <option value="" ${!trendingPos ? 'selected' : ''}>-- عادي / غير محدد (تلقائي) --</option>
+        <option value="left" ${trendingPos === 'left' ? 'selected' : ''}>⬅️ اليسار (Left Slot)</option>
+        <option value="center" ${trendingPos === 'center' ? 'selected' : ''}>⭐ المنتصف - الكارت الأبرز والمكبر (Center / Featured Slot)</option>
+        <option value="right" ${trendingPos === 'right' ? 'selected' : ''}>➡️ اليمين (Right Slot)</option>
+      </select>
+      <small style="color: var(--muted); font-size: 11px; margin-top: 6px; display: block; line-height: 1.5;">
+        اختر موضع ظهور هذا المنتج في الثلاث بطاقات لقسم الأكثر رواجاً (Trending Products). بطاقة المنتصف تظهر بحجم أكبر وإضاءة مميزة.
+      </small>
+    </div>
+    <div class="form-group">
+      <label>Product Images</label>
+      <input type="file" id="p-images" accept="image/*" multiple style="padding:8px; border:1px dashed var(--border); border-radius:10px; background:var(--surface2)">
+      <div id="p-images-preview" class="flex gap-2 mt-2 flex-wrap"></div>
+    </div>
+    <div class="form-group">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <label style="margin:0">Variants / Pricing *</label>
+        <button class="btn btn-secondary btn-sm" onclick="addVariantRow()">+ Add Variant</button>
+      </div>
+      <div id="variants-container" oninput="updateDiscountBadgePreview()">${variantsHtml}</div>
+    </div>`;
+
+      productExistingImages = product ? [...(product.imageNames || [])] : [];
+      productNewFiles = [];
+
+      document.getElementById('product-modal').classList.add('open');
+      renderProductImagesPreview();
+
+      // Handle image preview
+      document.getElementById('p-images').addEventListener('change', function () {
+        [...this.files].forEach(f => {
+          productNewFiles.push(f);
+        });
+        this.value = ''; // Clear file input
+        renderProductImagesPreview();
+      });
+
+      updateDiscountBadgePreview();
+    }
+
+    function updateDiscountBadgePreview() {
+      const percent = parseFloat(document.getElementById('p-discount')?.value) || 0;
+      const color = document.getElementById('p-discount-color')?.value || '#ef4444';
+      const preview = document.getElementById('discount-badge-preview');
+      if (preview) {
+        preview.style.backgroundColor = color;
+        preview.style.boxShadow = `0 4px 12px ${color}60`;
+        preview.textContent = percent > 0 ? `-${percent}%` : 'No Discount';
+        preview.style.opacity = percent > 0 ? '1' : '0.5';
+      }
+
+      const calcText = document.getElementById('discount-calc-text');
+      if (calcText) {
+        const firstCostInput = document.querySelector('#variants-container .v-cost');
+        const baseCost = firstCostInput ? (parseFloat(firstCostInput.value) || 0) : 0;
+        const curr = document.getElementById('p-currency')?.value === 'EUR' ? '€' : document.getElementById('p-currency')?.value === 'EGP' ? 'EGP ' : '$';
+        if (percent > 0 && baseCost > 0) {
+          const discCost = (baseCost * (1 - percent / 100)).toFixed(2);
+          calcText.innerHTML = `<span style="text-decoration:line-through;color:var(--muted);margin-right:6px">${curr}${baseCost.toFixed(2)}</span> <span style="color:#10b981;font-weight:700;font-size:14px">${curr}${discCost}</span> <span style="background:${color}22;color:${color};border:1px solid ${color}60;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:4px;margin-left:6px">-${percent}%</span>`;
+        } else if (percent > 0) {
+          calcText.innerHTML = `<span style="color:${color};font-weight:600">خصم -${percent}% نشط (أدخل سعر المتغير لتظهر الأرقام)</span>`;
+        } else {
+          calcText.innerHTML = `<span style="color:var(--muted)">لا يوجد خصم مفعّل</span>`;
+        }
+      }
+    }
+
+    function setDiscountColorPreset(color) {
+      const picker = document.getElementById('p-discount-color-picker');
+      const input = document.getElementById('p-discount-color');
+      if (picker) picker.value = color;
+      if (input) input.value = color;
+      updateDiscountBadgePreview();
+    }
+
+    function variantRow(i, v = {}) {
+      const hasId = !!(v.id || v.variant_id);
+      const vId = v.id || v.variant_id || '';
+      return `<div class="variant-row" id="vrow-${i}" style="${hasId ? 'grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr auto auto' : ''}">
+    <input type="hidden" class="v-id" value="${escapeHTML(vId)}">
+    <div class="form-group" style="margin:0"><label>Name</label><input class="v-name" value="${escapeHTML(v.name || '')}" placeholder="e.g. 1 Month"></div>
+    <div class="form-group" style="margin:0"><label>Price</label><input class="v-cost" type="number" step="0.01" value="${v.cost || ''}" placeholder="9.99"></div>
+    <div class="form-group" style="margin:0"><label>Stock Mode</label>
+      <select class="v-stockmode" onchange="toggleStockField(${i})">
+        <option value="1" ${(v.stockMode ?? v.stock_mode ?? 1) === 1 ? 'selected' : ''}>Unlimited</option>
+        <option value="0" ${(v.stockMode ?? v.stock_mode) === 0 ? 'selected' : ''}>Calculated</option>
+        <option value="2" ${(v.stockMode ?? v.stock_mode) === 2 ? 'selected' : ''}>Fixed</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin:0"><label>Stock</label><input class="v-stock" type="number" value="${v.stock || 0}" placeholder="0" ${(v.stockMode ?? v.stock_mode) === 0 ? 'disabled style="opacity:0.6"' : ''}></div>
+    <div class="form-group" style="margin:0"><label>Min Qty</label><input class="v-minqty" type="number" min="1" value="${v.minQuantity ?? v.min_quantity ?? 1}" placeholder="1"></div>
+    ${hasId ? `<button type="button" class="btn btn-secondary btn-sm" style="align-self:flex-end;margin-bottom:0" onclick="openVariantStockModal('${escapeHTML(vId)}', this)" title="Manage Stock Keys">🔑 Keys</button>` : ''}
+    <button class="btn btn-danger btn-sm" style="align-self:flex-end;margin-bottom:0" onclick="removeVariantRow(${i})">✕</button>
+  </div>`;
+    }
+
+    function toggleStockField(i) {
+      const row = document.getElementById(`vrow-${i}`);
+      if (!row) return;
+      const mode = parseInt(row.querySelector('.v-stockmode').value);
+      const stockInput = row.querySelector('.v-stock');
+      if (mode === 0) {
+        stockInput.disabled = true;
+        stockInput.style.opacity = '0.6';
+      } else {
+        stockInput.disabled = false;
+        stockInput.style.opacity = '1';
+      }
+    }
+
+    function addVariantRow() {
+      const container = document.getElementById('variants-container');
+      const div = document.createElement('div');
+      div.innerHTML = variantRow(variantCount);
+      container.appendChild(div.firstChild);
+      variantCount++;
+    }
+
+    function removeVariantRow(i) {
+      const row = document.getElementById(`vrow-${i}`);
+      if (row) row.remove();
+    }
+
+    function autoGenSlug(force = false) {
+      const nameVal = document.getElementById('p-name').value;
+      const slugInput = document.getElementById('p-slug');
+      // Only auto-generate if the slug field is currently empty or if forced (via button click)
+      if (force || !slugInput.value.trim()) {
+        const generated = nameVal
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, '') // Remove non-word chars
+          .replace(/[\s_-]+/g, '-') // Replace spaces/underscores with single hyphens
+          .replace(/^-+|-+$/g, ''); // Trim leading/trailing hyphens
+        slugInput.value = generated;
+        updateSlugPreview();
+      }
+    }
+
+    function updateSlugPreview() {
+      const slugVal = document.getElementById('p-slug').value.trim();
+      const previewSpan = document.getElementById('slug-preview');
+      if (previewSpan) {
+        if (slugVal) {
+          const origin = window.location.origin.replace('3001', '5173').replace('5000', '5173');
+          previewSpan.textContent = `${origin}/product/${slugVal}`;
+        } else {
+          previewSpan.textContent = '—';
+        }
+      }
+    }
+
+    async function saveProduct() {
+      const name = document.getElementById('p-name').value.trim();
+      if (!name) return toast('Product name is required', 'error');
+
+      // Upload new images
+      const newFileNames = [];
+      for (const file of productNewFiles) {
+        const res = await uploadFile(file);
+        if (res?.success) newFileNames.push(res.data.fileName);
+      }
+
+      const imageNames = [...productExistingImages, ...newFileNames];
+
+      // Collect variants
+      const variants = [...document.querySelectorAll('#variants-container .variant-row')].map(row => ({
+        id: row.querySelector('.v-id')?.value || undefined,
+        name: row.querySelector('.v-name').value.trim(),
+        cost: parseFloat(row.querySelector('.v-cost').value) || 0,
+        stock_mode: parseInt(row.querySelector('.v-stockmode').value),
+        stock: parseInt(row.querySelector('.v-stock').value) || 0,
+        min_quantity: parseInt(row.querySelector('.v-minqty').value) || 1,
+        max_quantity: 0
+      })).filter(v => v.name);
+
+      if (!variants.length) return toast('Add at least one variant', 'error');
+
+      const slug = document.getElementById('p-slug').value.trim() || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const metadata = {
+        status: document.getElementById('p-status').value,
+        youtubeVideoId: document.getElementById('p-youtube').value.trim() || undefined,
+        embedTitle: document.getElementById('p-embed-title').value.trim() || undefined,
+        embedDescription: document.getElementById('p-embed-desc').value.trim() || undefined,
+        embedImage: document.getElementById('p-embed-image').value.trim() || undefined,
+        embedColor: document.getElementById('p-embed-color').value.trim() || undefined
+      };
+
+      const discountColor = document.getElementById('p-discount-color')?.value.trim() || '#ef4444';
+      metadata.discountBadgeColor = discountColor;
+
+      const trendingPos = document.getElementById('p-trending-pos')?.value || '';
+      metadata.trendingPosition = trendingPos;
+
+      const body = {
+        name, slug,
+        description: document.getElementById('p-desc').value,
+        category_id: document.getElementById('p-cat').value || null,
+        currency: document.getElementById('p-currency').value || null,
+        discount_percent: parseFloat(document.getElementById('p-discount')?.value) || 0,
+        discount_badge_color: discountColor,
+        trending_position: trendingPos,
+        metadata,
+        visibility: parseInt(document.getElementById('p-visibility').value),
+        is_best_seller: document.getElementById('p-bestseller').checked,
+        order: 0, variants, imageNames
+      };
+
+      let res;
+      if (editingProductId) {
+        res = await api('PUT', `/admin/products/${editingProductId}`, body);
+      } else {
+        res = await api('POST', '/admin/products', body);
+      }
+
+      if (res?.success) {
+        toast(editingProductId ? 'Product updated!' : 'Product created!', 'success');
+        closeModal('product-modal');
+        await loadCategories();
+        loadProducts();
+      } else {
+        toast(res?.message || 'Failed to save product', 'error');
+      }
+    }
+
+    async function deleteProduct(id) {
+      const p = currentProducts.find(x => x.id === id);
+      const name = p ? p.name : 'this product';
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      const res = await api('DELETE', `/admin/products/${id}`);
+      if (res?.success) { toast('Product deleted', 'success'); loadProducts(); }
+      else toast(res?.message || 'Failed to delete', 'error');
+    }
+
+    // ── Categories ────────────────────────────────────────────────────────────────
+
+    async function openCategoryModal(id = null) {
+      editingCategoryId = id;
+      const cat = id ? currentCategories.find(c => c.id === id) : null;
+      document.getElementById('cat-modal-title').textContent = id ? 'Edit Category' : 'Add Category';
+
+      const saveBtn = document.querySelector('#category-modal .btn-primary');
+      if (saveBtn) {
+        saveBtn.textContent = id ? 'Update Category' : 'Save Category';
+      }
+
+      document.getElementById('cat-form-content').innerHTML = `
+    <div class="flex items-center justify-center" style="min-height:200px">
+      <div class="spinner"></div>
+    </div>`;
+      document.getElementById('category-modal').classList.add('open');
+
+      // Fetch all products to associate
+      const prodRes = await api('GET', '/admin/products');
+      const allProducts = prodRes?.data || [];
+      const selectedProductIds = allProducts.filter(p => p.category_id === id).map(p => p.id);
+
+      document.getElementById('cat-form-content').innerHTML = `
+    <div class="form-group">
+      <label>Category Image</label>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+        <div id="c-img-preview-container">
+          ${cat?.image_name ? `<img src="${window.location.origin}/uploads/${escapeHTML(cat.image_name)}" class="img-preview">` : '<div class="img-preview" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--muted)">?</div>'}
+        </div>
+        <div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('c-img').click()">Change</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="deleteCategoryImage()">Delete</button>
+          <p style="font-size:11px;color:var(--muted);margin-top:4px">Max 30MB</p>
+        </div>
+      </div>
+      <input type="file" id="c-img" accept="image/*" style="display:none" onchange="previewCategoryImage(this)">
+      <input type="hidden" id="c-existing-img" value="${escapeHTML(cat?.image_name || '')}">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="form-group" style="margin:0">
+        <label>Name *</label>
+        <input id="c-name" value="${escapeHTML(cat?.name || '')}" placeholder="e.g. Fivem" required>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Slug (optional)</label>
+        <input id="c-slug" value="${escapeHTML(cat?.slug || '')}" placeholder="electronics">
+        <p style="font-size:11px;color:var(--muted);margin-top:4px">Leave empty to use name as slug</p>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Visibility *</label>
+      <select id="c-visibility">
+        <option value="0" ${!cat || cat.visibility === 0 ? 'selected' : ''}>Public</option>
+        <option value="1" ${cat?.visibility === 1 ? 'selected' : ''}>Private</option>
+      </select>
+      <p style="font-size:11px;color:var(--muted);margin-top:4px">Private categories are only visible to store admins</p>
+    </div>
+
+    <div class="form-group">
+      <label>Description (optional)</label>
+      <textarea id="c-desc" placeholder="Enter a description for search engines..." rows="3">${escapeHTML(cat?.description || '')}</textarea>
+      <p style="font-size:11px;color:var(--muted);margin-top:4px">This description will be used for search engine optimization</p>
+    </div>
+
+    <div class="form-group">
+      <label>Products</label>
+      <input type="text" id="c-prod-search" placeholder="Search products..." oninput="filterCategoryProducts()" style="margin-bottom:12px">
+      <div id="c-prod-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:8px;background:var(--surface2)">
+        ${allProducts.map(p => {
+        const isChecked = selectedProductIds.includes(p.id);
+        const nameInitial = p.name ? p.name.charAt(0).toUpperCase() : 'P';
+        return `
+            <div class="c-prod-item" data-name="${escapeHTML(p.name.toLowerCase())}" data-slug="${escapeHTML(p.slug.toLowerCase())}" style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)">
+              <div style="display:flex;align-items:center;gap:12px">
+                <input type="checkbox" class="c-prod-check" value="${escapeHTML(p.id)}" ${isChecked ? 'checked' : ''} style="width:auto;margin:0" onchange="updateSelectedProductCount()">
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.08);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">
+                  ${escapeHTML(nameInitial)}
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:13px;color:var(--text)">${escapeHTML(p.name)}</div>
+                  <div style="font-size:11px;color:var(--muted)">/${escapeHTML(p.slug)}</div>
+                </div>
+              </div>
+            </div>`;
+      }).join('') || '<div style="color:var(--muted);padding:16px;text-align:center;font-size:13px">No products found</div>'}
+      </div>
+      <p id="c-selected-count" style="font-size:11px;color:var(--muted);margin-top:8px">Selected: ${selectedProductIds.length} products</p>
+    </div>
+
+    <div class="form-group" style="display:none">
+      <label>Order</label>
+      <input id="c-order" type="number" value="${cat?.order || 0}">
+    </div>`;
+    }
+
+    function previewCategoryImage(input) {
+      if (input.files && input.files[0]) {
+        const url = URL.createObjectURL(input.files[0]);
+        document.getElementById('c-img-preview-container').innerHTML = `<img src="${url}" class="img-preview">`;
+      }
+    }
+
+    function deleteCategoryImage() {
+      document.getElementById('c-img').value = '';
+      document.getElementById('c-existing-img').value = '';
+      document.getElementById('c-img-preview-container').innerHTML = '<div class="img-preview" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--muted)">?</div>';
+    }
+
+    function filterCategoryProducts() {
+      const q = document.getElementById('c-prod-search').value.toLowerCase().trim();
+      document.querySelectorAll('.c-prod-item').forEach(el => {
+        const name = el.dataset.name;
+        const slug = el.dataset.slug;
+        if (name.includes(q) || slug.includes(q)) {
+          el.style.display = 'flex';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+
+    function updateSelectedProductCount() {
+      const checked = document.querySelectorAll('.c-prod-check:checked').length;
+      document.getElementById('c-selected-count').textContent = `Selected: ${checked} products`;
+    }
+
+    async function saveCategory() {
+      const name = document.getElementById('c-name').value.trim();
+      if (!name) return toast('Category name required', 'error');
+
+      let image_name = document.getElementById('c-existing-img').value;
+      const imgFile = document.getElementById('c-img').files[0];
+      if (imgFile) {
+        const res = await uploadFile(imgFile);
+        if (res?.success) image_name = res.data.fileName;
+      }
+
+      const productIds = [...document.querySelectorAll('.c-prod-check:checked')].map(el => el.value);
+
+      const body = {
+        name,
+        slug: document.getElementById('c-slug').value.trim() || name.toLowerCase().replace(/\s+/g, '-'),
+        image_name: image_name || null,
+        description: document.getElementById('c-desc').value.trim(),
+        order: parseInt(document.getElementById('c-order').value) || 0,
+        visibility: parseInt(document.getElementById('c-visibility').value),
+        productIds
+      };
+
+      let res;
+      if (editingCategoryId) res = await api('PUT', `/admin/categories/${editingCategoryId}`, body);
+      else res = await api('POST', '/admin/categories', body);
+
+      if (res?.success) {
+        toast(editingCategoryId ? 'Category updated!' : 'Category created!', 'success');
+        closeModal('category-modal');
+        await loadCategories();
+        renderCategories();
+      } else toast(res?.message || 'Failed', 'error');
+    }
+
+    async function renderCategories() {
+      showSpinner();
+      await loadCategories();
+      const baseUrl = window.location.origin;
+      document.getElementById('content').innerHTML = `
+    <div class="card">
+      <table>
+        <thead><tr><th>Image</th><th>Name</th><th>Slug</th><th>Products</th><th>Visibility</th><th>Actions</th></tr></thead>
+        <tbody>${currentCategories.map(c => `
+          <tr>
+            <td>${c.image_name ? `<img src="${baseUrl}/uploads/${escapeHTML(c.image_name)}" class="product-img">` : '<div class="product-img" style="background:var(--surface2)"></div>'}</td>
+            <td><strong>${escapeHTML(c.name)}</strong></td>
+            <td style="color:var(--muted);font-family:monospace;font-size:12px">${escapeHTML(c.slug)}</td>
+            <td>${c.productCount || 0}</td>
+            <td>${c.visibility === 0 ? '<span class="badge badge-green">Visible</span>' : '<span class="badge badge-red">Hidden</span>'}</td>
+            <td class="flex gap-2">
+              <button class="btn btn-secondary btn-sm" onclick="openCategoryModal('${escapeHTML(c.id)}')">Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteCategory('${escapeHTML(c.id)}')">Delete</button>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px">No categories yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+    }
+
+    async function deleteCategory(id) {
+      const c = currentCategories.find(x => x.id === id);
+      const name = c ? c.name : 'this category';
+      if (!confirm(`Delete category "${name}"?`)) return;
+      const res = await api('DELETE', `/admin/categories/${id}`);
+      if (res?.success) { toast('Category deleted', 'success'); await loadCategories(); renderCategories(); }
+      else toast(res?.message || 'Failed', 'error');
+    }
+
+    // ── Orders ────────────────────────────────────────────────────────────────────
+
+    async function loadOrders() {
+      showSpinner();
+      const res = await api('GET', '/admin/orders');
+      if (!res || !res.success) {
+        document.getElementById('content').innerHTML = `
+      <div class="card" style="text-align:center;padding:48px">
+        <div style="color:var(--danger);font-size:48px;margin-bottom:16px">⚠️</div>
+        <h3>Failed to load orders</h3>
+        <p style="color:var(--muted);margin:8px 0 24px">${res?.message || 'Check connection to backend server.'}</p>
+        <button class="btn btn-primary" onclick="loadOrders()">Retry</button>
+      </div>`;
+        return;
+      }
+      const orders = res.data || [];
+
+      document.getElementById('content').innerHTML = `
+    <div class="card">
+      <table>
+        <thead><tr><th>Order ID</th><th>Email</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody>${orders.map(o => `
+          <tr style="cursor:pointer" onclick="showOrderDetails('${escapeHTML(o.id)}')">
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="color:var(--primary);font-family:monospace;font-size:12px;font-weight:600">#${escapeHTML(o.id.slice(0, 8))}</span>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 6px;font-size:10px" onclick="event.stopPropagation();navigator.clipboard.writeText('${escapeHTML(o.id)}');toast('Order ID copied!', 'success');" title="Copy full ID: ${escapeHTML(o.id)}">📋</button>
+              </div>
+            </td>
+            <td>${escapeHTML(o.email)}</td>
+            <td style="font-size:12px;color:var(--muted)">${o.items.map(i => `${i.quantity}x ${escapeHTML(i.productName)}`).join(', ')}</td>
+            <td><strong>${formatPrice(o.total)}</strong></td>
+            <td style="text-transform:capitalize;font-size:12px;color:var(--muted)">${escapeHTML(o.payment_method || 'direct')}</td>
+            <td>${statusBadge(o.status)}</td>
+            <td style="color:var(--muted)">${escapeHTML(new Date(o.created_at).toLocaleDateString())}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <select onchange="updateOrderStatus('${escapeHTML(o.id)}', this.value)" style="padding:4px 8px;font-size:12px;border-radius:6px">
+                  <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
+                  <option value="processing" ${o.status === 'processing' ? 'selected' : ''}>Processing</option>
+                  <option value="completed" ${o.status === 'completed' ? 'selected' : ''}>Completed</option>
+                  <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" onclick="showOrderDetails('${escapeHTML(o.id)}')">Manage</button>
+              </div>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No orders yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+    }
+
+    async function updateOrderStatus(id, status) {
+      const res = await api('PUT', `/ admin / orders / ${ id }/status`, { status });
+    if (res?.success) toast('Order status updated', 'success');
+    else toast(res?.message || 'Failed to update', 'error');
+    }
+
+    // ── Detailed Order & Manual Delivery ─────────────────────────────────────────
+
+    let activeDeliveryOrderId = null;
+
+    function toggleDeliveryType(type) {
+      const container = document.getElementById('manual-delivery-keys-container');
+      if (type === 'custom') {
+        container.style.display = 'block';
+      } else {
+        container.style.display = 'none';
+        document.getElementById('manual-delivery-keys').value = '';
+      }
+    }
+
+    const INSTRUCTION_TEMPLATES = {
+      rockstar: `<h3 style="font-size:16px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:8px;">⚡ Rockstar Activation Code Instructions ⚡</h3>
+<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Follow these steps to redeem your Rockstar activation code.</p>
+
+<div style="margin-bottom:16px;">
+  <strong style="color:#fff;display:block;margin-bottom:6px;font-size:13px;">❓ Before You Start</strong>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <li>Create a new Rockstar account or log into an existing one</li>
+    <li>You must be signed in through the Rockstar Games Launcher</li>
+    <li>Codes must be redeemed inside the launcher, not the website</li>
+  </ul>
+</div>
+
+<div style="margin-bottom:16px;">
+  <strong style="color:#fff;display:block;margin-bottom:6px;font-size:13px;">🚀 How to Redeem</strong>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <li>Open the Rockstar Games Launcher</li>
+    <li>Sign into your Rockstar account</li>
+    <li>Click your profile picture in the top-right corner</li>
+    <li>Press Redeem Code</li>
+    <li>Enter your activation code exactly as shown</li>
+    <li>Confirm and redeem the code</li>
+  </ul>
+</div>
+
+<div style="margin-bottom:16px;">
+  <strong style="color:#fff;display:block;margin-bottom:6px;font-size:13px;">✅ Once Redeemed</strong>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <li>Your Rockstar account is now activated.</li>
+    <li>You can use the account for FiveM after redemption.</li>
+    <li>Keep your account login details saved somewhere safe.</li>
+  </ul>
+</div>
+
+<div style="margin-bottom:16px;">
+  <strong style="color:#fff;display:block;margin-bottom:6px;font-size:13px;">⚠️ Important</strong>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <li>Each code is one-time use only.</li>
+    <li>Once redeemed, the code cannot be reused.</li>
+    <li>No refunds are available after the code has been redeemed.</li>
+    <li>Make sure you are redeeming it on the correct Rockstar account.</li>
+  </ul>
+</div>`,
+
+      modmenu: `<h3 style="font-size:16px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:8px;">🔑 Mod Menu Activation Guide 🔑</h3>
+<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Follow these steps to activate and install your mod menu.</p>
+
+<div style="margin-bottom:16px;">
+  <strong style="color:#fff;display:block;margin-bottom:6px;font-size:13px;">⚙️ Installation</strong>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <li>Disable any third-party antivirus software temporarily to prevent false positives</li>
+    <li>Download the loader from the official website provided in your email</li>
+    <li>Run the loader as Administrator</li>
+  </ul>
+</div>
+
+<div style="margin-bottom:16px;">
+  <strong style="color:#fff;display:block;margin-bottom:6px;font-size:13px;">🔑 Activation</strong>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <li>Create a new account inside the loader</li>
+    <li>Go to the 'Activate License' section</li>
+    <li>Paste your license key and click Redeem</li>
+  </ul>
+</div>`,
+
+      account: `<h3 style="font-size:16px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:8px;">🎮 Account Login Information 🎮</h3>
+<p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Below are the login details for your purchased account.</p>
+
+<div style="margin-bottom:16px;">
+  <strong style="color:#fff;display:block;margin-bottom:6px;font-size:13px;">🔒 Security Recommendations</strong>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--muted);line-height:1.6;">
+    <li>Immediately log in and change the password</li>
+    <li>Update the recovery email to your own personal email</li>
+    <li>Enable 2FA (Two-Factor Authentication) for maximum protection</li>
+  </ul>
+</div>`
+    };
+
+    function loadInstructionsTemplate(templateKey) {
+      const textarea = document.getElementById('manual-delivery-instructions');
+      textarea.value = INSTRUCTION_TEMPLATES[templateKey] || '';
+    }
+
+    function openDeliverManuallyModal(orderId) {
+      activeDeliveryOrderId = orderId;
+      document.getElementById('manual-delivery-type').value = 'stock';
+      document.getElementById('manual-delivery-keys').value = '';
+      document.getElementById('manual-delivery-keys-container').style.display = 'none';
+      document.getElementById('instructions-template-select').value = '';
+      document.getElementById('manual-delivery-instructions').value = '';
+      document.getElementById('deliver-manually-modal').classList.add('open');
+    }
+
+    async function submitManualDelivery() {
+      if (!activeDeliveryOrderId) return;
+      const type = document.getElementById('manual-delivery-type').value;
+      const keysText = document.getElementById('manual-delivery-keys').value.trim();
+      const customKeys = (type === 'custom' && keysText) ? keysText.split('\n').map(k => k.trim()).filter(k => k.length > 0) : [];
+      const deliveryInstructions = document.getElementById('manual-delivery-instructions').value.trim();
+
+      const res = await api('POST', `/admin/orders/${activeDeliveryOrderId}/deliver-manually`, {
+        customKeys,
+        deliveryInstructions
+      });
+      if (res && res.success) {
+        toast('Keys delivered successfully!', 'success');
+        closeModal('deliver-manually-modal');
+        showOrderDetails(activeDeliveryOrderId);
+      } else {
+        toast(res?.message || 'Failed to deliver keys', 'error');
+      }
+    }
+
+    async function showOrderDetails(orderId) {
+      showSpinner();
+      const res = await api('GET', `/admin/orders/${orderId}`);
+      if (!res || !res.success) {
+        toast(res?.message || 'Failed to load order details', 'error');
+        showSection('orders');
+        return;
+      }
+      const order = res.data;
+
+      document.getElementById('page-title').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;font-size:16px;font-weight:500;">
+      <a href="#" onclick="showSection('orders'); return false;" style="color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:4px;">&larr; Orders</a>
+      <span style="color:var(--muted)">/</span>
+      <span style="color:var(--text);font-weight:600;">Order ${escapeHTML(order.id)}</span>
+    </div>
+  `;
+
+      const actions = document.getElementById('topbar-actions');
+      actions.innerHTML = `
+    <button class="btn btn-secondary btn-sm" onclick="toast('Receipt resent', 'success')">Resend receipt</button>
+    <button class="btn btn-secondary btn-sm" onclick="window.print()">Export PDF</button>
+    <button class="btn btn-primary btn-sm" style="background:var(--primary);color:#0a0a0a" onclick="openDeliverManuallyModal('${escapeHTML(order.id)}')">Deliver manually</button>
+  `;
+
+      const itemsHtml = order.items.map(item => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:40px;height:40px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(--border)">📦</div>
+        <div>
+          <div style="font-weight:600;font-size:14px">${escapeHTML(item.productName)}</div>
+          <div style="font-size:12px;color:var(--muted)">${escapeHTML(item.variantName)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Quantity: ${item.quantity} • Cost: ${formatPrice(item.price)}</div>
+        </div>
+      </div>
+      <div style="font-weight:600">${formatPrice(item.subtotal)}</div>
+    </div>
+  `).join('');
+
+      let keysHtml = '';
+      if (order.deliveredItems && order.deliveredItems.length > 0) {
+        keysHtml = `
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <h4 style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Delivered Keys:</h4>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${order.deliveredItems.map((key, idx) => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:12px">
+              <span>${escapeHTML(key)}</span>
+              <button class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:10px" onclick="navigator.clipboard.writeText('${escapeHTML(key)}');toast('Copied', 'success')">Copy</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+      } else {
+        keysHtml = `
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);text-align:center;padding:24px;color:var(--muted);font-size:13px">
+        No keys delivered for this order. Click "Deliver manually" to fulfill.
+      </div>
+    `;
+      }
+
+      let instructionsHtml = '';
+      if (order.delivery_instructions) {
+        instructionsHtml = `
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <h4 style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Delivered Instructions:</h4>
+        <div style="padding:16px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;font-size:13px;line-height:1.6;color:var(--muted);max-height:250px;overflow-y:auto">
+          ${sanitizeHTML(order.delivery_instructions)}
+        </div>
+      </div>
+    `;
+      }
+
+      const ipAddress = escapeHTML(order.ip_address || '119.13.156.53');
+      const deviceBrowser = escapeHTML(order.device_browser || 'Chrome');
+      const countryName = escapeHTML(order.country || 'Cambodia');
+      const locationText = escapeHTML(order.location || 'Phnom Penh, Cambodia');
+      const ispName = escapeHTML(order.isp || 'VIETTEL (CAMBODIA) PTE., LTD');
+      const proxyText = escapeHTML(order.proxy || 'No');
+      const hostingText = escapeHTML(order.hosting || 'No');
+      const mobileText = escapeHTML(order.mobile || 'No');
+      const sourceText = escapeHTML(order.source || 'Storefront');
+      const dateText = escapeHTML(new Date(order.created_at).toLocaleString());
+
+      document.getElementById('content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);padding:20px;border-radius:16px">
+      <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:20px">⏱️</div>
+      <div>
+        <h3 style="font-size:18px;font-weight:700">Order ${escapeHTML(order.id)}</h3>
+        <p style="color:var(--muted);font-size:13px;margin-top:2px">${dateText} • ${statusBadge(order.status)}</p>
+      </div>
+    </div>
+ 
+    <div style="display:grid;grid-template-columns: 2fr 1fr;gap:24px;align-items:start">
+      <!-- Left Column -->
+      <div style="display:flex;flex-direction:column;gap:24px">
+        <!-- Order Summary Card -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h3 style="font-size:14px;color:var(--muted);text-transform:uppercase">Order Summary</h3></div>
+          <div style="display:grid;grid-template-columns: repeat(3, 1fr);gap:16px;text-align:center">
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px">
+              <div style="font-size:24px;font-weight:700;color:var(--text)">${formatPrice(order.total)}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Total Amount</div>
+            </div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px">
+              <div style="font-size:24px;font-weight:700;color:var(--text)">${order.items.length}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Items</div>
+            </div>
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px">
+              <div style="font-size:20px;font-weight:700;color:var(--text);text-transform:uppercase">${escapeHTML(order.payment_method || 'Direct')}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Payment Method</div>
+            </div>
+          </div>
+ 
+          <div style="margin-top:24px">
+            <h4 style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Items Purchased</h4>
+            ${itemsHtml}
+          </div>
+          
+          ${keysHtml}
+          ${instructionsHtml}
+        </div>
+ 
+        <!-- Payment Details Card -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h3 style="font-size:14px;color:var(--muted);text-transform:uppercase">Payment Details</h3></div>
+          <div style="display:grid;grid-template-columns: 1fr 1fr;gap:24px">
+            <div>
+              <div style="font-size:12px;color:var(--muted);text-transform:uppercase">Payment Method</div>
+              <div style="font-size:15px;font-weight:600;margin-top:4px">${escapeHTML(order.payment_method || 'Direct')}</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Payment Breakdown</div>
+              <table style="width:100%;font-size:13px">
+                <tr>
+                  <td style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02);color:var(--muted)">Subtotal</td>
+                  <td style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02);text-align:right">${formatPrice(order.total)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-weight:600">Total</td>
+                  <td style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.02);text-align:right;font-weight:600">${formatPrice(order.total)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;font-weight:600;color:var(--success)">Net Amount</td>
+                  <td style="padding:6px 0;text-align:right;font-weight:600;color:var(--success)">${formatPrice(order.total)}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+ 
+        <!-- Technical Details Card -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h3 style="font-size:14px;color:var(--muted);text-transform:uppercase">Technical Details</h3></div>
+          <div style="display:grid;grid-template-columns: 1fr 1fr;gap:16px;font-size:13px">
+            <div>
+              <div style="color:var(--muted);margin-bottom:2px">Device & Browser</div>
+              <div style="font-weight:500">${deviceBrowser}</div>
+            </div>
+            <div>
+              <div style="color:var(--muted);margin-bottom:2px">IP Address</div>
+              <div style="font-weight:500">${ipAddress}</div>
+            </div>
+            <div style="margin-top:8px">
+              <div style="color:var(--muted);margin-bottom:2px">Order Date</div>
+              <div style="font-weight:500">${dateText}</div>
+            </div>
+            <div style="margin-top:8px">
+              <div style="color:var(--muted);margin-bottom:2px">Source</div>
+              <div style="font-weight:500">${sourceText}</div>
+            </div>
+            <div style="grid-column: span 2;margin-top:8px">
+              <div style="color:var(--muted);margin-bottom:2px">Order ID</div>
+              <div style="font-family:monospace;font-size:12px">${escapeHTML(order.id)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- Right Column -->
+      <div style="display:flex;flex-direction:column;gap:24px">
+        <!-- Customer Card -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h3 style="font-size:14px;color:var(--muted);text-transform:uppercase">Customer</h3></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center">👤</div>
+            <div style="min-w-0">
+              <div style="font-weight:600;font-size:14px;word-break:break-all">${escapeHTML(order.email)}</div>
+              <div style="font-size:11px;color:var(--muted)">Customer Account</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">Location: <span style="font-weight:600;color:var(--text);margin-left:4px">${countryName}</span></div>
+        </div>
+ 
+        <!-- IP Address Information Card -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h3 style="font-size:14px;color:var(--muted);text-transform:uppercase">IP Address Information</h3></div>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:12px">
+            <div>
+              <div style="color:var(--muted)">IP Address</div>
+              <div style="font-weight:600;margin-top:2px">${ipAddress}</div>
+            </div>
+            <div>
+              <div style="color:var(--muted)">Location</div>
+              <div style="font-weight:500;margin-top:2px">${locationText}</div>
+            </div>
+            <div>
+              <div style="color:var(--muted)">ISP</div>
+              <div style="font-weight:500;margin-top:2px">${ispName}</div>
+            </div>
+            
+            <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+              <div style="font-weight:600;margin-bottom:8px">🛡️ Security Analysis</div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="color:var(--muted)">Proxy</span>
+                <span style="font-weight:600;color:${proxyText === 'Yes' ? 'var(--danger)' : 'var(--success)'};margin-left:auto">${proxyText}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="color:var(--muted)">Hosting</span>
+                <span style="font-weight:600;color:${hostingText === 'Yes' ? 'var(--danger)' : 'var(--success)'};margin-left:auto">${hostingText}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--muted)">Mobile</span>
+                <span style="font-weight:600;color:var(--muted);margin-left:auto">${mobileText}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+ 
+        <!-- Quick Actions Card -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><h3 style="font-size:14px;color:var(--muted);text-transform:uppercase">Quick Actions</h3></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-direction:column">
+            <button class="btn btn-secondary" style="justify-content:center" onclick="toast('Receipt resent', 'success')">Resend receipt</button>
+            <button class="btn btn-secondary" style="justify-content:center" onclick="window.print()">Export PDF</button>
+            <button class="btn btn-primary" style="justify-content:center;background:var(--primary);color:#0a0a0a" onclick="openDeliverManuallyModal('${escapeHTML(order.id)}')">Deliver manually</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+    }
+
+    // ── Reviews ───────────────────────────────────────────────────────────────────
+
+    async function loadReviews() {
+      showSpinner();
+      const res = await api('GET', '/admin/reviews');
+      if (!res || !res.success) {
+        document.getElementById('content').innerHTML = `
+      <div class="card" style="text-align:center;padding:48px">
+        <div style="color:var(--danger);font-size:48px;margin-bottom:16px">⚠️</div>
+        <h3>Failed to load reviews</h3>
+        <p style="color:var(--muted);margin:8px 0 24px">${res?.message || 'Check connection to backend server.'}</p>
+        <button class="btn btn-primary" onclick="loadReviews()">Retry</button>
+      </div>`;
+        return;
+      }
+      const reviews = res.data || [];
+
+      document.getElementById('content').innerHTML = `
+    <div class="card">
+      <table>
+        <thead><tr><th>Author</th><th>Rating</th><th>Review</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody>${reviews.map(r => `
+          <tr>
+            <td><strong>${escapeHTML(r.author)}</strong></td>
+            <td>${escapeHTML('⭐'.repeat(r.rating))}</td>
+            <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(r.reason || '—')}</td>
+            <td style="color:var(--muted)">${escapeHTML(new Date(r.date_created).toLocaleDateString())}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteReview('${escapeHTML(r.id)}')">Delete</button></td>
+          </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px">No reviews yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+    }
+
+    function openReviewModal() {
+      const productOptions = currentProducts.map(p => `<option value="${escapeHTML(p.id)}">${escapeHTML(p.name)}</option>`).join('');
+      document.getElementById('review-form-content').innerHTML = `
+    <div class="form-group"><label>Product</label><select id="r-product"><option value="">— General Review —</option>${productOptions}</select></div>
+    <div class="form-group"><label>Author Name</label><input id="r-author" placeholder="e.g. Alex M."></div>
+    <div class="form-group"><label>Rating (1-5)</label><select id="r-rating">
+      <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+      <option value="4">⭐⭐⭐⭐ (4)</option>
+      <option value="3">⭐⭐⭐ (3)</option>
+      <option value="2">⭐⭐ (2)</option>
+      <option value="1">⭐ (1)</option>
+    </select></div>
+    <div class="form-group"><label>Review Text</label><textarea id="r-text" placeholder="Great product!"></textarea></div>`;
+      document.getElementById('review-modal').classList.add('open');
+    }
+
+    async function saveReview() {
+      const body = {
+        product_id: document.getElementById('r-product').value || null,
+        author: document.getElementById('r-author').value.trim() || 'Anonymous',
+        rating: parseInt(document.getElementById('r-rating').value),
+        reason: document.getElementById('r-text').value.trim()
+      };
+      const res = await api('POST', '/admin/reviews', body);
+      if (res?.success) { toast('Review added!', 'success'); closeModal('review-modal'); loadReviews(); }
+      else toast(res?.message || 'Failed', 'error');
+    }
+
+    async function deleteReview(id) {
+      if (!confirm('Delete this review?')) return;
+      const res = await api('DELETE', `/admin/reviews/${id}`);
+      if (res?.success) { toast('Review deleted', 'success'); loadReviews(); }
+    }
+
+    // ── Settings ──────────────────────────────────────────────────────────────────
+
+    async function loadSettings() {
+      showSpinner();
+      const res = await api('GET', '/admin/settings');
+      if (!res || !res.success) {
+        document.getElementById('content').innerHTML = `
+      <div class="card" style="text-align:center;padding:48px">
+        <div style="color:var(--danger);font-size:48px;margin-bottom:16px">⚠️</div>
+        <h3>Failed to load settings</h3>
+        <p style="color:var(--muted);margin:8px 0 24px">${res?.message || 'Check connection to backend server.'}</p>
+        <button class="btn btn-primary" onclick="loadSettings()">Retry</button>
+      </div>`;
+        return;
+      }
+      const s = res.data || {};
+
+      document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><h3>Store Settings</h3><button class="btn btn-primary" onclick="saveSettings()">Save Settings</button></div>
+      <div class="form-group"><label>Store Name</label><input id="s-name" value="${escapeHTML(s.store_name || '')}"></div>
+      <div class="form-group"><label>Store Description</label><textarea id="s-desc">${escapeHTML(s.store_description || '')}</textarea></div>
+      <div class="form-group">
+        <label>Default Visitor Display Currency (العملة الافتراضية للواجهة)</label>
+        <select id="s-currency">
+          <option value="USD" ${s.currency === 'USD' || !s.currency ? 'selected' : ''}>USD ($)</option>
+          <option value="EUR" ${s.currency === 'EUR' ? 'selected' : ''}>EUR (€)</option>
+          <option value="EGP" ${s.currency === 'EGP' ? 'selected' : ''}>EGP (ج.م)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Currency Locale (e.g. en-US, ar-EG)</label><input id="s-locale" value="${escapeHTML(s.currency_locale || 'en-US')}"></div>
+      <div class="form-group"><label>USD to EGP Rate (e.g. 50.00)</label><input type="number" step="0.01" id="s-usd-to-egp" value="${escapeHTML(s.usd_to_egp_rate || '50.00')}"></div>
+      <div class="form-group"><label>USD to EUR Rate (e.g. 0.92)</label><input type="number" step="0.01" id="s-usd-to-eur" value="${escapeHTML(s.usd_to_eur_rate || '0.92')}"></div>
+      <div class="form-group"><label>Discord URL</label><input id="s-discord" value="${escapeHTML(s.discord_url || '')}"></div>
+      <div class="form-group"><label>TikTok URL</label><input id="s-tiktok" value="${escapeHTML(s.tiktok_url || '')}"></div>
+      <div class="form-group"><label>YouTube URL</label><input id="s-youtube" value="${escapeHTML(s.youtube_url || '')}"></div>
+      <div class="form-group">
+        <label>TamPay API Key</label>
+        <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);padding:14px;border-radius:10px;font-size:13px;color:#a7f3d0;display:flex;align-items:center;gap:8px">
+          <span>🛡️</span>
+          <span>TamPay Secret Key is loaded securely from backend environment variables ('.env' file) as 'TAMPAY_API_KEY'.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Logo & Banner</h3></div>
+      <div class="form-group"><label>Store Logo</label><input type="file" id="s-logo" accept="image/*" style="padding:8px">
+        ${s.logo_name ? `<img src="${window.location.origin}/uploads/${escapeHTML(s.logo_name)}" style="height:60px;margin-top:8px;border-radius:8px">` : ''}
+      </div>
+      <div class="form-group"><label>Store Banner</label><input type="file" id="s-banner" accept="image/*" style="padding:8px">
+        ${s.banner_name ? `<img src="${window.location.origin}/uploads/${escapeHTML(s.banner_name)}" style="height:100px;margin-top:8px;border-radius:8px;object-fit:cover;width:100%;max-width:400px">` : ''}
+      </div>
+      <button class="btn btn-primary" onclick="saveMedia()">Upload Media</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Change Admin Password</h3></div>
+      <div class="form-group"><label>Current Password</label><input type="password" id="s-currpass" placeholder="Enter current password"></div>
+      <div class="form-group"><label>New Password</label><input type="password" id="s-newpass" placeholder="Enter new password"></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="s-confpass" placeholder="Confirm new password"></div>
+      <button class="btn btn-primary" onclick="changePassword()">Change Password</button>
+    </div>`;
+    }
+
+    async function saveSettings() {
+      const body = {
+        store_name: document.getElementById('s-name').value,
+        store_description: document.getElementById('s-desc').value,
+        currency: document.getElementById('s-currency').value,
+        currency_locale: document.getElementById('s-locale').value,
+        usd_to_egp_rate: document.getElementById('s-usd-to-egp').value,
+        usd_to_eur_rate: document.getElementById('s-usd-to-eur').value,
+        discord_url: document.getElementById('s-discord').value,
+        tiktok_url: document.getElementById('s-tiktok').value,
+        youtube_url: document.getElementById('s-youtube').value
+      };
+      const res = await api('PUT', '/admin/settings', body);
+      if (res?.success) {
+        toast('Settings saved!', 'success');
+        loadCurrencySettingsFromStore(res.data);
+      }
+      else toast(res?.message || 'Failed to save', 'error');
+    }
+
+    async function changePassword() {
+      const oldPassword = document.getElementById('s-currpass').value;
+      const newPassword = document.getElementById('s-newpass').value;
+      const confirmPassword = document.getElementById('s-confpass').value;
+
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        return toast('All password fields are required', 'error');
+      }
+      if (newPassword !== confirmPassword) {
+        return toast('New passwords do not match', 'error');
+      }
+
+      const btn = document.querySelector('button[onclick="changePassword()"]');
+      const originalText = btn.textContent;
+      btn.textContent = 'Updating...';
+      btn.disabled = true;
+
+      const res = await api('PUT', '/admin/change-password', { oldPassword, newPassword });
+
+      btn.textContent = originalText;
+      btn.disabled = false;
+
+      if (res?.success) {
+        toast('Password changed successfully!', 'success');
+        document.getElementById('s-currpass').value = '';
+        document.getElementById('s-newpass').value = '';
+        document.getElementById('s-confpass').value = '';
+      } else {
+        toast(res?.message || 'Failed to change password', 'error');
+      }
+    }
+
+    async function saveMedia() {
+      const logoFile = document.getElementById('s-logo').files[0];
+      const bannerFile = document.getElementById('s-banner').files[0];
+      const updates = {};
+
+      if (logoFile) {
+        const res = await uploadFile(logoFile);
+        if (res?.success) updates.logo_name = res.data.fileName;
+      }
+      if (bannerFile) {
+        const res = await uploadFile(bannerFile);
+        if (res?.success) updates.banner_name = res.data.fileName;
+      }
+
+      if (Object.keys(updates).length) {
+        const res = await api('PUT', '/admin/settings', updates);
+        if (res?.success) { toast('Media uploaded!', 'success'); loadSettings(); }
+        else toast('Failed to save media', 'error');
+      } else {
+        toast('No files selected', 'error');
+      }
+    }
+
+    let activeStockVariantId = null;
+
+    async function openVariantStockModal(variantId, element) {
+      activeStockVariantId = variantId;
+      const row = element.closest('.variant-row');
+      const variantName = row ? row.querySelector('.v-name').value.trim() : 'Variant';
+
+      document.getElementById('stock-modal-title').textContent = `Manage Stock Keys — ${variantName}`;
+      document.getElementById('bulk-stock-input').value = '';
+
+      // Render loading state inside table
+      document.getElementById('stock-table-body').innerHTML = `
+    <tr>
+      <td colspan="3" style="text-align:center;padding:16px;color:var(--muted)">
+        <div class="spinner" style="width:24px;height:24px;margin:0 auto 8px"></div>
+        Loading stock items...
+      </td>
+    </tr>`;
+
+      document.getElementById('variant-stock-modal').classList.add('open');
+      await loadVariantStock();
+    }
+
+    async function loadVariantStock() {
+      if (!activeStockVariantId) return;
+
+      const res = await api('GET', `/admin/variants/${activeStockVariantId}/stock`);
+      if (!res?.success) {
+        document.getElementById('stock-table-body').innerHTML = `
+      <tr>
+        <td colspan="3" style="text-align:center;padding:16px;color:var(--danger)">
+          Failed to load stock keys: ${res?.message || 'Server error'}
+        </td>
+      </tr>`;
+        return;
+      }
+
+      const stockItems = res.data || [];
+      document.getElementById('stock-table-body').innerHTML = stockItems.map(item => {
+        const statusText = item.is_used
+          ? `<span class="badge badge-yellow" title="Purchased by ${item.order_email || 'unknown'}">Used (${item.order_email || 'N/A'})</span>`
+          : `<span class="badge badge-green">Available</span>`;
+
+        return `
+      <tr>
+        <td style="font-family:monospace;font-size:12px;padding:8px">${escapeHtml(item.content)}</td>
+        <td style="padding:8px">${statusText}</td>
+        <td style="padding:8px">
+          <button class="btn btn-danger btn-sm" onclick="deleteStockEntry('${item.id}')">Delete</button>
+        </td>
+      </tr>`;
+      }).join('') || `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:16px">No keys added yet. Add some above.</td></tr>`;
+    }
+
+    async function saveVariantStock() {
+      if (!activeStockVariantId) return;
+      const text = document.getElementById('bulk-stock-input').value;
+      if (!text.trim()) return toast('Please enter some stock keys/accounts first', 'error');
+
+      const btn = document.querySelector('button[onclick="saveVariantStock()"]');
+      const oldText = btn.textContent;
+      btn.textContent = 'Adding...';
+      btn.disabled = true;
+
+      const res = await api('POST', `/admin/variants/${activeStockVariantId}/stock`, { stockText: text });
+
+      btn.textContent = oldText;
+      btn.disabled = false;
+
+      if (res?.success) {
+        toast(res.message || 'Stock keys added successfully!', 'success');
+        document.getElementById('bulk-stock-input').value = '';
+        await loadVariantStock();
+        // Update products list in background so the stock count is updated in UI
+        await loadProducts();
+      } else {
+        toast(res?.message || 'Failed to add stock keys', 'error');
+      }
+    }
+
+    async function deleteStockEntry(id) {
+      if (!confirm('Delete this stock key?')) return;
+      const res = await api('DELETE', `/admin/stock/${id}`);
+      if (res?.success) {
+        toast('Stock key deleted', 'success');
+        await loadVariantStock();
+        await loadProducts();
+      } else {
+        toast(res?.message || 'Failed to delete stock key', 'error');
+      }
+    }
+    // ── Helpers ───────────────────────────────────────────────────────────────────
+
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    function statusBadge(status) {
+      const map = { pending: 'badge-yellow', processing: 'badge-blue', completed: 'badge-green', cancelled: 'badge-red' };
+      return `<span class="badge ${map[status] || 'badge-yellow'}">${status}</span>`;
+    }
+
+    function toast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `show ${type}`;
+      setTimeout(() => { el.className = ''; }, 3000);
+    }
+
+    // ── Bulk Actions ─────────────────────────────────────────────────────────────
+
+    function toggleSelectAllProducts(checked) {
+      const cbs = document.querySelectorAll('.product-select-cb');
+      if (checked) {
+        currentProducts.forEach(p => selectedProducts.add(p.id));
+        cbs.forEach(cb => cb.checked = true);
+      } else {
+        selectedProducts.clear();
+        cbs.forEach(cb => cb.checked = false);
+      }
+      updateBulkActionBar();
+    }
+
+    function toggleProductSelection(id, checked) {
+      if (checked) {
+        selectedProducts.add(id);
+      } else {
+        selectedProducts.delete(id);
+      }
+      const selectAll = document.getElementById('selectAllProducts');
+      if (selectAll) {
+        selectAll.checked = currentProducts.length > 0 && selectedProducts.size === currentProducts.length;
+      }
+      updateBulkActionBar();
+    }
+
+    function deselectAllProducts() {
+      const selectAll = document.getElementById('selectAllProducts');
+      if (selectAll) selectAll.checked = false;
+      toggleSelectAllProducts(false);
+    }
+
+    function updateBulkActionBar() {
+      const bar = document.getElementById('bulk-action-bar');
+      const countLabel = document.getElementById('bulk-selected-count');
+      if (bar && countLabel) {
+        if (selectedProducts.size > 0) {
+          bar.style.display = 'flex';
+          countLabel.textContent = selectedProducts.size;
+        } else {
+          bar.style.display = 'none';
+        }
+      }
+    }
+
+    async function bulkDeleteProducts() {
+      if (!selectedProducts.size) return;
+      if (!confirm(`Delete ${selectedProducts.size} products? This cannot be undone.`)) return;
+
+      const res = await api('DELETE', '/admin/products', { ids: Array.from(selectedProducts) });
+      if (res?.success) {
+        toast('Products deleted', 'success');
+        selectedProducts.clear();
+        loadProducts();
+      } else {
+        toast(res?.message || 'Failed to delete products', 'error');
+      }
+    }
+
+    function openBulkUpdateModal() {
+      if (!selectedProducts.size) return;
+      document.getElementById('bulk-update-count').textContent = selectedProducts.size;
+      document.getElementById('bulk-update-modal').classList.add('open');
+    }
+
+    function closeBulkUpdateModal() {
+      document.getElementById('bulk-update-modal').classList.remove('open');
+    }
+
+    async function submitBulkUpdate() {
+      const visibilityStr = document.getElementById('bulk-visibility').value;
+      if (visibilityStr === "") return toast("Please select a visibility status", "error");
+
+      const visibility = parseInt(visibilityStr);
+      const res = await api('PUT', '/admin/products/bulk-visibility', { ids: Array.from(selectedProducts), visibility });
+      if (res?.success) {
+        toast('Products updated', 'success');
+        closeBulkUpdateModal();
+        selectedProducts.clear();
+        loadProducts();
+      } else {
+        toast(res?.message || 'Failed to update products', 'error');
+      }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────────
+
+    if (token) {
+      fetch(`${API}/admin/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            showApp();
+          } else {
+            token = null;
+            try { localStorage.removeItem('admin_token'); } catch (e) {}
+          }
+        })
+        .catch(() => { });
+    }
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"e8d184a7d2e54f259a2bf0d07958a9f3","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+
+</html>
